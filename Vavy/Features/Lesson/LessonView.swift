@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LessonView: View {
     @StateObject private var viewModel: LessonViewModel
+    @State private var isShowingProgress = false
     #if DEBUG
     @State private var isShowingDebugAttempts = false
     #endif
@@ -33,8 +34,17 @@ struct LessonView: View {
             }
             .navigationTitle("Vavy")
             .navigationBarTitleDisplayMode(.inline)
-            #if DEBUG
             .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        isShowingProgress = true
+                    } label: {
+                        Image(systemName: "checklist")
+                    }
+                    .disabled(viewModel.isRecording || viewModel.isEvaluating || viewModel.lesson == nil)
+                    .accessibilityLabel("Open lesson progress")
+                }
+                #if DEBUG
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         isShowingDebugAttempts = true
@@ -45,8 +55,13 @@ struct LessonView: View {
                     .accessibilityLabel("Open debug attempts")
                     .accessibilityValue("\(viewModel.debugAttemptStore.entries.count) saved")
                 }
+                #endif
             }
-            #endif
+        }
+        .sheet(isPresented: $isShowingProgress) {
+            if let lesson = viewModel.lesson {
+                LessonProgressView(items: lesson.items, historyStore: viewModel.itemHistoryStore, selectAction: viewModel.goToItem)
+            }
         }
         #if DEBUG
         .sheet(isPresented: $isShowingDebugAttempts) {
@@ -77,7 +92,12 @@ struct LessonView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                PromptCardView(item: item, index: viewModel.currentIndex, total: viewModel.itemCount)
+                PromptCardView(
+                    item: item,
+                    index: viewModel.currentIndex,
+                    total: viewModel.itemCount,
+                    historySummary: viewModel.currentItemHistorySummary
+                )
 
                 HStack(spacing: 12) {
                     Button(action: viewModel.previousItem) {

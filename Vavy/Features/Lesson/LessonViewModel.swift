@@ -14,6 +14,7 @@ final class LessonViewModel: ObservableObject {
     @Published var backendBaseURLString: String
 
     let audioRecorder: AudioRecorder
+    let itemHistoryStore: ItemHistoryStore
     #if DEBUG
     let debugAttemptStore: AttemptDebugStore
     #endif
@@ -38,12 +39,14 @@ final class LessonViewModel: ObservableObject {
         audioRecorder: AudioRecorder,
         audioQualityAnalyzer: AudioQualityAnalyzer,
         toneContourAnalyzer: ToneContourAnalyzer = ToneContourAnalyzer(),
+        itemHistoryStore: ItemHistoryStore? = nil,
         lesson: Lesson? = nil
     ) {
         self.apiClient = apiClient
         self.audioRecorder = audioRecorder
         self.audioQualityAnalyzer = audioQualityAnalyzer
         self.toneContourAnalyzer = toneContourAnalyzer
+        self.itemHistoryStore = itemHistoryStore ?? ItemHistoryStore()
         self.lesson = lesson
         self.backendBaseURLString = apiClient.baseURL.absoluteString
         #if DEBUG
@@ -65,6 +68,19 @@ final class LessonViewModel: ObservableObject {
                 self?.objectWillChange.send()
             }
             .store(in: &cancellables)
+
+        self.itemHistoryStore.objectWillChange
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Progress summary for the current item, driving the pass/fail badge on
+    /// the prompt card.
+    var currentItemHistorySummary: ItemHistorySummary {
+        guard let currentItem else { return .empty }
+        return itemHistoryStore.summary(for: currentItem.id)
     }
 
     func applyBackendBaseURL() {
@@ -209,6 +225,7 @@ final class LessonViewModel: ObservableObject {
                 )
                 requestDurationMs = elapsedMilliseconds(since: requestStartedAt)
                 latestAssessment = response.result
+                recordItemHistoryIfGraded(response.result, itemID: currentItem.id, createdAt: attemptStartedAt)
                 recordDebugAttempt(
                     source: .backendResponse,
                     item: currentItem,
@@ -223,12 +240,14 @@ final class LessonViewModel: ObservableObject {
                     createdAt: attemptStartedAt
                 )
                 #else
-                latestAssessment = try await apiClient.evaluateAttempt(
+                let result = try await apiClient.evaluateAttempt(
                     itemID: currentItem.id,
                     audioFileURL: recordedURL,
                     audioQualityReport: qualityReport,
                     toneAnalysis: toneAnalysis
                 )
+                latestAssessment = result
+                recordItemHistoryIfGraded(result, itemID: currentItem.id, createdAt: attemptStartedAt)
                 #endif
                 errorMessage = nil
 
@@ -290,6 +309,15 @@ final class LessonViewModel: ObservableObject {
         errorMessage = nil
     }
 
+    func goToItem(_ index: Int) {
+        guard itemCount > 0, (0..<itemCount).contains(index) else { return }
+        currentIndex = index
+        latestAssessment = nil
+        latestAudioQualityReport = nil
+        latestToneAnalysis = nil
+        errorMessage = nil
+    }
+
     func backToLesson() {
         latestAssessment = nil
     }
@@ -328,6 +356,14 @@ final class LessonViewModel: ObservableObject {
     private func elapsedMilliseconds(since startDate: Date?) -> Int? {
         guard let startDate else { return nil }
         return Int((Date().timeIntervalSince(startDate) * 1_000).rounded())
+    }
+
+    /// Only `.passed`/`.notPassed` are a real pronunciation verdict worth
+    /// counting toward progress — `.retryAudioQuality`/`.backendError` mean
+    /// the attempt was never actually judged.
+    private func recordItemHistoryIfGraded(_ result: AssessmentResult, itemID: String, createdAt: Date) {
+        guard result.status == .passed || result.status == .notPassed else { return }
+        itemHistoryStore.record(itemID: itemID, status: result.status, strictScore: result.strictScore, createdAt: createdAt)
     }
 
     #if DEBUG
