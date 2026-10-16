@@ -86,7 +86,7 @@ struct EvaluationView: View {
             return Color(uiColor: .systemGreen)
         case .retryAudioQuality:
             return Color(uiColor: .systemOrange)
-        case .backendError:
+        case .backendError, .uncertain:
             return Color(uiColor: .systemOrange)
         case .notPassed:
             return Color(uiColor: .systemRed)
@@ -141,6 +141,17 @@ struct EvaluationView_Previews: PreviewProvider {
                 .padding()
             }
             .previewDisplayName("Retry audio")
+
+            ScrollView {
+                EvaluationView(
+                    result: StarterLessonData.uncertainAssessment,
+                    tryAgainAction: {},
+                    nextPromptAction: {},
+                    backToLessonAction: {}
+                )
+                .padding()
+            }
+            .previewDisplayName("Uncertain")
 
             ScrollView {
                 EvaluationView(

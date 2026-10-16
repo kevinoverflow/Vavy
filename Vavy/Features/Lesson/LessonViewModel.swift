@@ -359,10 +359,10 @@ final class LessonViewModel: ObservableObject {
     }
 
     /// Only `.passed`/`.notPassed` are a real pronunciation verdict worth
-    /// counting toward progress — `.retryAudioQuality`/`.backendError` mean
+    /// counting toward progress — `.uncertain`/`.retryAudioQuality`/`.backendError` mean
     /// the attempt was never actually judged.
     private func recordItemHistoryIfGraded(_ result: AssessmentResult, itemID: String, createdAt: Date) {
-        guard result.status == .passed || result.status == .notPassed else { return }
+        guard result.status.isVerdict else { return }
         itemHistoryStore.record(itemID: itemID, status: result.status, strictScore: result.strictScore, createdAt: createdAt)
     }
 

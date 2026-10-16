@@ -24,6 +24,9 @@ struct ToneAnalysisResult: Codable, Equatable {
     let voicedFrameCount: Int
     let totalFrameCount: Int
     let durationMs: Int
+    /// Which analyzer produced this result, so the backend and offline evaluation can tell
+    /// classifier versions apart. `nil` when decoded from results stored before versioning.
+    var analyzerVersion: String? = ToneContourAnalyzer.version
 
     enum CodingKeys: String, CodingKey {
         case detectedTone = "detected_tone"
@@ -32,6 +35,7 @@ struct ToneAnalysisResult: Codable, Equatable {
         case voicedFrameCount = "voiced_frame_count"
         case totalFrameCount = "total_frame_count"
         case durationMs = "duration_ms"
+        case analyzerVersion = "analyzer_version"
     }
 
     var jsonString: String {
@@ -44,6 +48,9 @@ struct ToneAnalysisResult: Codable, Equatable {
 }
 
 struct ToneContourAnalyzer {
+    /// Bump whenever framing, pitch estimation, normalization or classification rules change.
+    static let version = "tone-contour-heuristic-1"
+
     private let sampleRate: Double
     private let frameLengthSamples: Int
     private let hopLengthSamples: Int

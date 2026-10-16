@@ -79,6 +79,30 @@ enum StarterLessonData {
         )
     )
 
+    static let uncertainAssessment = AssessmentResult(
+        attemptID: "att_preview_uncertain",
+        status: .uncertain,
+        passed: false,
+        expectedText: "mã",
+        recognizedText: "Mã.",
+        overallScore: 93,
+        strictScore: nil,
+        scores: AssessmentScores(accuracy: 92, fluency: 100, completeness: 100, pronunciation: 93),
+        mainError: AssessmentMainError(
+            type: .toneUncertain,
+            expected: "nga",
+            heardLike: nil,
+            severity: "low",
+            message: "The tone evidence was conflicting, so this attempt was not judged."
+        ),
+        feedback: AssessmentFeedback(
+            title: "Try again: I couldn't judge the tone",
+            body: "The recording was clear, but I could not tell confidently whether the ngã tone was right. This attempt does not count against you.",
+            fix: "Say mã once more at a steady volume, with a short pause before and after.",
+            drill: ["mã"]
+        )
+    )
+
     static let backendErrorAssessment = AssessmentResult(
         attemptID: "att_preview_backend_error",
         status: .backendError,

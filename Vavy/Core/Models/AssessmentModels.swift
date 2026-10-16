@@ -31,6 +31,9 @@ struct AssessmentResult: Identifiable, Codable, Equatable {
 enum AssessmentStatus: String, Codable, Equatable {
     case passed
     case notPassed = "not_passed"
+    /// The recording was usable but the evidence was weak or conflicting, so the backend
+    /// gave no verdict. Never counts as a failed attempt.
+    case uncertain
     case retryAudioQuality = "retry_audio_quality"
     case backendError = "backend_error"
 
@@ -40,12 +43,20 @@ enum AssessmentStatus: String, Codable, Equatable {
         self = AssessmentStatus(rawValue: value) ?? .backendError
     }
 
+    /// Whether the backend actually judged the pronunciation. Only verdicts count toward
+    /// progress; abstentions (`uncertain`, `retry_audio_quality`, `backend_error`) never do.
+    var isVerdict: Bool {
+        self == .passed || self == .notPassed
+    }
+
     var displayTitle: String {
         switch self {
         case .passed:
             return "Passed."
         case .notPassed:
             return "Not passed."
+        case .uncertain:
+            return "Try again. I couldn't judge this confidently."
         case .retryAudioQuality:
             return "Try again. I could not judge the recording."
         case .backendError:
@@ -118,6 +129,8 @@ struct AssessmentMainError: Codable, Equatable {
 enum AssessmentErrorType: String, Codable, Equatable {
     case backendError = "backend_error"
     case audioQuality = "audio_quality"
+    case noSpeech = "no_speech"
+    case toneUncertain = "tone_uncertain"
     case incompletePrompt = "incomplete_prompt"
     case toneConfusion = "tone_confusion"
     case pronunciationNotStrictEnough = "pronunciation_not_strict_enough"
@@ -146,6 +159,10 @@ enum AssessmentErrorType: String, Codable, Equatable {
             return "Backend error"
         case .audioQuality:
             return "Audio quality"
+        case .noSpeech:
+            return "No speech recognized"
+        case .toneUncertain:
+            return "Tone not judged"
         case .incompletePrompt:
             return "Incomplete prompt"
         case .toneConfusion:

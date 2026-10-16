@@ -55,7 +55,7 @@ struct FeedbackCardView: View {
             return Color(uiColor: .systemGreen)
         case .retryAudioQuality:
             return Color(uiColor: .systemOrange)
-        case .backendError:
+        case .backendError, .uncertain:
             return Color(uiColor: .systemOrange)
         case .notPassed:
             return Color(uiColor: .systemRed)
@@ -66,8 +66,10 @@ struct FeedbackCardView: View {
         switch type {
         case .backendError:
             return "server.rack"
-        case .audioQuality, .audioTooQuiet, .audioTooNoisy, .audioClipped:
+        case .audioQuality, .audioTooQuiet, .audioTooNoisy, .audioClipped, .noSpeech:
             return "waveform.badge.exclamationmark"
+        case .toneUncertain:
+            return "questionmark.circle"
         case .incompletePrompt:
             return "quote.bubble"
         case .toneConfusion:
