@@ -376,9 +376,12 @@ Expected response:
 ```text
 passed
 not_passed
-retry_audio_quality
+uncertain             # usable audio, conflicting or weak evidence: no verdict
+retry_audio_quality   # includes main_error.type no_speech
 backend_error
 ```
+
+Only `passed` and `not_passed` are verdicts (`AssessmentStatus.isVerdict`). Nothing else may count toward item history or be shown as a failure. Unknown future statuses decode as `backendError`.
 
 ---
 
@@ -430,7 +433,9 @@ For `tone_minimal_pair` items only, `ToneContourAnalyzer.swift` runs a heuristic
 
 Pipeline: frame the signal (40ms/10ms hop) → YIN-style pitch estimate per frame with an octave-jump continuity constraint → speaker-normalize to semitones relative to the utterance's own voiced-frame median → summarize into a 5-point quintile contour (gaps allowed — a quintile with no voiced frames is `nil`, itself a feature for ngã/nặng) → rule-based classification into one of the six tones with a confidence score.
 
-The result (`ToneAnalysisResult`) is uploaded as the `client_tone_features` multipart field, same pattern as the existing `client_audio_features` field. It is *evidence*, not a verdict — the backend's `strictTutor.service.ts` combines it with Azure's evidence under an asymmetric rule (on-device can rescue a pass; a solo on-device "wrong" against corroborated Azure evidence is ambiguous, not a hard fail). See `PROJECT_SUMMARY.md` → "On-device tone analysis" for the full decision rule.
+The result (`ToneAnalysisResult`) is uploaded as the `client_tone_features` multipart field, same pattern as the existing `client_audio_features` field. It is *evidence only*: the backend (`CLIENT_TONE_MODE=evidence_only`) never passes or fails an attempt on it alone. When it confidently disagrees with Azure in either direction, the backend returns `uncertain`. Each result carries `analyzer_version` (`ToneContourAnalyzer.version`); bump it whenever framing, pitch estimation, normalization or classification rules change.
+
+Its accuracy is unmeasured. `VavyTests/ToneContourAnalyzerTests.swift` and `PitchEstimatorTests.swift` contain characterization tests that pin current, partly known-wrong behavior (octave errors, dependence on trailing silence and input gain). A change that improves the analyzer must update those expectations deliberately. To measure the analyzer on labeled recordings, use `Tools/extract-tone-features.sh` with the backend's `npm run eval` (see `vavy-backend/eval/README.md`).
 
 This is a heuristic v1, not a guarantee: hỏi and ngã are phonetically merged (no glottal break) for many speakers/dialects, which no DSP heuristic fixes. A `#if DEBUG` debug view (`toneAnalysisDebugView` in `LessonView.swift`) surfaces detected tone/confidence/contour per attempt — use it to tune the classifier's thresholds against real recordings before trusting it further.
 
@@ -516,6 +521,12 @@ For `retry_audio_quality`, do not show “failed.” Show:
 
 ```text
 Try again. I could not judge the recording.
+```
+
+For `uncertain`, do not show "failed" either. Show:
+
+```text
+Try again. I couldn't judge this confidently.
 ```
 
 For `not_passed`, show:
