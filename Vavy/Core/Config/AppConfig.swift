@@ -1,7 +1,7 @@
 import Foundation
 
 struct AppConfig {
-    static let defaultBackendBaseURL = URL(string: "https://8dee-141-76-8-144.ngrok-free.app")!
+    static let defaultBackendBaseURL = URL(string: "https://vavy-backend.vercel.app")!
 
     private static let backendBaseURLKey = "backend_base_url"
 

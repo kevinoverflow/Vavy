@@ -73,7 +73,7 @@ struct LessonProgressView: View {
         case .notPassed:
             systemName = "xmark.circle.fill"
             color = Color(uiColor: .systemRed)
-        case .retryAudioQuality, .backendError, .none:
+        case .uncertain, .retryAudioQuality, .backendError, .none:
             systemName = "circle.dashed"
             color = Color(uiColor: .tertiaryLabel)
         }

@@ -59,7 +59,7 @@ The iOS app never talks to Azure directly and holds no Azure credentials — it 
 ## Running it
 
 1. Open `Vavy.xcodeproj` in Xcode and run the `Vavy` scheme.
-2. Start the backend (see the `vavy-backend` repo) and, in a `DEBUG` build, point the app at it from the in-app backend URL field — bare tunnel hosts like `abc123.ngrok-free.app` are normalized automatically.
+2. By default the app talks to the deployed backend at `https://vavy-backend.vercel.app`. To use a local backend instead (see the `vavy-backend` repo), enter its URL in the in-app backend field of a `DEBUG` build — bare tunnel hosts like `abc123.ngrok-free.app` are normalized automatically.
 3. `localhost` reaches your Mac from the simulator; a physical iPhone needs your Mac's LAN IP or a tunnel URL instead.
 4. Tap the mic, say the prompt, tap stop. The app checks audio quality and runs on-device tone analysis locally before uploading anything.
 

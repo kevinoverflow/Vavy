@@ -115,7 +115,7 @@ private struct AttemptDebugRow: View {
             return Color(uiColor: .systemGreen)
         case .notPassed:
             return Color(uiColor: .systemRed)
-        case .retryAudioQuality, .backendError, .none:
+        case .uncertain, .retryAudioQuality, .backendError, .none:
             return Color(uiColor: .systemOrange)
         }
     }
@@ -126,6 +126,8 @@ private struct AttemptDebugRow: View {
             return "checkmark.circle.fill"
         case .notPassed:
             return "xmark.circle.fill"
+        case .uncertain:
+            return "questionmark.circle.fill"
         case .retryAudioQuality:
             return "waveform.badge.exclamationmark"
         case .backendError, .none:
